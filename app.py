@@ -24,7 +24,7 @@ OUTPUT_COLUMNS = [
     "Net Weekly",
 ]
 
-st.set_page_config(page_title="PAS Vendor PDF Converter", page_icon="pas_logo.png", layout="wide")
+st.set_page_config(page_title="Supplier Hire PDF Converter", page_icon="pas_logo.png", layout="wide")
 
 # =========================
 # PAS UI STYLE - copied to match existing PAS apps
@@ -202,12 +202,12 @@ with st.sidebar:
         st.markdown('<div style="background:#FFD400;color:#000;border-radius:14px;padding:18px;text-align:center;font-weight:950;font-size:30px;">PAS</div>', unsafe_allow_html=True)
     st.markdown(
         """
-        <div class="pas-sidebar-title">PAS Vendor<br>PDF Converter</div>
+        <div class="pas-sidebar-title">PAS Supplier Report<br>PDF Converter</div>
         <div class="pas-yellow-line"></div>
-        <div class="pas-sidebar-copy">Upload vendor hire report PDFs, then export one clean standard Excel file.</div>
+        <div class="pas-sidebar-copy">Upload Supplier hire report PDFs, then export one clean standard Excel file.</div>
         <div class="pas-sidebar-rule"></div>
         <div class="pas-sidebar-heading">Instructions</div>
-        <div class="pas-nav-row"><span class="pas-nav-icon"><svg viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15.3"/></svg></span><span>Upload Vendor PDF Reports</span></div>
+        <div class="pas-nav-row"><span class="pas-nav-icon"><svg viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15.3"/></svg></span><span>Upload Supplier PDF Reports</span></div>
         <div class="pas-nav-row"><span class="pas-nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></span><span>Run PDF Converter</span></div>
         <div class="pas-nav-row"><span class="pas-nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span><span>Download Clean Excel</span></div>
         <div class="pas-nav-row"><span class="pas-nav-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v5l-4 8a4 4 0 0 0 3.6 5.7h4.8A4 4 0 0 0 18 16l-4-8V3"/><path d="M8 14h8"/></svg></span><span>Standard PAS Columns</span></div>
@@ -734,8 +734,8 @@ def render_table(df: pd.DataFrame):
 # =========================
 # Main UI
 # =========================
-st.markdown('<div class="pas-upload-card"><div class="pas-upload-title">Upload Vendor Hire Report PDF(s)</div>', unsafe_allow_html=True)
-pdf_files = st.file_uploader("Upload Vendor Hire Report PDF(s)", type=["pdf"], accept_multiple_files=True, label_visibility="collapsed", key="pdf_upload")
+st.markdown('<div class="pas-upload-card"><div class="pas-upload-title">Upload Supplier Hire Report PDF(s)</div>', unsafe_allow_html=True)
+pdf_files = st.file_uploader("Upload Supplier Hire Report PDF(s)", type=["pdf"], accept_multiple_files=True, label_visibility="collapsed", key="pdf_upload")
 if pdf_files:
     for f in pdf_files:
         render_selected_file_card(f)
@@ -748,7 +748,7 @@ if "vendor_pdf_converter_results" not in st.session_state:
 
 if run:
     if not pdf_files:
-        st.warning("Please upload at least one vendor hire report PDF.")
+        st.warning("Please upload at least one Supplier hire report PDF.")
         st.stop()
     all_frames = []
     log_rows = []
@@ -793,7 +793,7 @@ results = st.session_state.get("vendor_pdf_converter_results")
 if results is not None:
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div><div><div class="kpi-label">PDFs processed</div><div class="kpi-value">{results["total_files"]}</div><div class="kpi-sub">Vendor reports</div></div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="kpi-card"><div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div><div><div class="kpi-label">PDFs processed</div><div class="kpi-value">{results["total_files"]}</div><div class="kpi-sub">Supplier reports</div></div></div>', unsafe_allow_html=True)
     with c2:
         st.markdown(f'<div class="kpi-card"><div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg></div><div><div class="kpi-label">Rows converted</div><div class="kpi-value">{results["total_rows"]}</div><div class="kpi-sub">Clean Excel lines</div></div></div>', unsafe_allow_html=True)
     with c3:
@@ -817,7 +817,7 @@ if results is not None:
             use_container_width=True,
         )
 else:
-    st.info("Upload vendor hire report PDFs, then click Run PDF converter.")
+    st.info("Upload Supplier hire report PDFs, then click Run PDF converter.")
 
 if "animation_shown" not in st.session_state:
     render_bottom_chase()
