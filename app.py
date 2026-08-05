@@ -195,9 +195,9 @@ def render_selected_file_card(uploaded_file):
 
 with st.sidebar:
     if Path("pas_logo.png").exists():
-        st.image("pas_logo.png", width="stretch")
+        st.image("pas_logo.png", use_container_width=True)
     elif Path("assets/pas_logo.png").exists():
-        st.image("assets/pas_logo.png", width="stretch")
+        st.image("assets/pas_logo.png", use_container_width=True)
     else:
         st.markdown('<div style="background:#FFD400;color:#000;border-radius:14px;padding:18px;text-align:center;font-weight:950;font-size:30px;">PAS</div>', unsafe_allow_html=True)
     st.markdown(
