@@ -647,6 +647,70 @@ def parse_generic_order_blocks(text: str) -> List[Dict[str, str]]:
     return [r for r in rows if valid_row(r)]
 
 
+def parse_whats_out_where(uploaded_file) -> List[Dict[str, str]]:
+    """Read this report by column position, retaining wrapped cells and both dates."""
+    import pdfplumber
+
+    rows = []
+    uploaded_file.seek(0)
+    try:
+        with pdfplumber.open(uploaded_file) as pdf:
+            for page in pdf.pages:
+                words = page.extract_words(x_tolerance=2, y_tolerance=2)
+                # Require the complete report header before applying this route.
+                headers = {}
+                for word in words:
+                    if word["text"] == "Item":
+                        nearby = [w for w in words if abs(w["top"] - word["top"]) < 2]
+                        labels = ["Item", "Description", "Outs.", "Hire", "Return",
+                                  "Number", "Reference", "Account", "Name", "Address"]
+                        for label in labels:
+                            matches = [w for w in nearby if w["text"] == label]
+                            if matches:
+                                headers[label] = matches[-1] if label == "Number" else matches[0]
+                        break
+                if len(headers) != 10:
+                    continue
+                starts = [headers[k]["x0"] for k in
+                          ["Item", "Description", "Outs.", "Hire", "Return",
+                           "Number", "Reference", "Account", "Name", "Address"]]
+                if starts != sorted(starts):
+                    continue
+                header_bottom = max(w["bottom"] for w in headers.values())
+                # Item codes mark row starts; other columns can continue on later lines.
+                anchors = [w for w in words if w["top"] > header_bottom
+                           and starts[0] - 2 <= w["x0"] < starts[1] - 2
+                           and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9./_-]*", w["text"])
+                           and not re.fullmatch(r"\d{1,2}/\d{1,2}/\d{2,4}", w["text"])]
+                anchors.sort(key=lambda w: w["top"])
+                for i, anchor in enumerate(anchors):
+                    bottom = anchors[i + 1]["top"] - 2 if i + 1 < len(anchors) else page.height
+                    # Stop the final row at the report footer.
+                    footer = [w["top"] for w in words if w["top"] > anchor["top"] + 2
+                              and w["text"] == "Page"]
+                    if footer:
+                        bottom = min(bottom, min(footer) - 2)
+                    cells = []
+                    for col, left in enumerate(starts):
+                        right = starts[col + 1] - 2 if col + 1 < len(starts) else page.width
+                        cell_words = [w for w in words
+                                      if anchor["top"] - 2 <= w["top"] < bottom
+                                      and left - 2 <= w["x0"] < right]
+                        cell_words.sort(key=lambda w: (round(w["top"] / 2), w["x0"]))
+                        cells.append(" ".join(w["text"] for w in cell_words))
+                    if not re.fullmatch(r"-?\d+(?:\.\d+)?", cells[2]):
+                        continue
+                    if not re.fullmatch(r"\d{1,2}/\d{1,2}/\d{2,4}", cells[3]):
+                        continue
+                    row = make_row(site=cells[9], order_no=cells[6], contract_no=cells[5],
+                                   fleet=cells[0], desc=cells[1], qty=cells[2], on_hire=cells[3])
+                    if valid_row(row):
+                        rows.append(row)
+    finally:
+        uploaded_file.seek(0)
+    return rows
+
+
 def smart_extract_vendor_pdf(uploaded_file) -> Tuple[pd.DataFrame, List[str]]:
     text = extract_pdf_text(uploaded_file)
     warnings = []
@@ -670,6 +734,14 @@ def smart_extract_vendor_pdf(uploaded_file) -> Tuple[pd.DataFrame, List[str]]:
         except Exception as exc:
             warnings.append(f"{name} parser skipped: {exc}")
             parser_counts[name] = 0
+
+    if "what's out where" in text.lower():
+        try:
+            found = parse_whats_out_where(uploaded_file)
+            parser_counts["What's Out Where column table"] = len(found)
+            all_rows.extend(found)
+        except Exception as exc:
+            warnings.append(f"What's Out Where parser skipped: {exc}")
 
     rows = dedupe_rows(all_rows)
     df = pd.DataFrame(rows, columns=OUTPUT_COLUMNS)
